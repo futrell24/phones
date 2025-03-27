@@ -31,10 +31,3 @@
 				wouldn’t allow. Many people do these methods so they can get free paid apps and just wanting to just show off their unique personal phone (Showoff).  
 				</p>
 				<h3>Hacking phones is a great hobby to pick up!!</h3>
-			</div>
-
-			
-		</div>
-	</div>
-</body>
-</html>
