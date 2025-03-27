@@ -10,7 +10,7 @@
 		<div id="nav-container">
 			<!--Category Menu Links-->
 			<ul class="nav">
-				<li><a href="index.html">Index</a></li>
+				<li><a href="index.html">Home</a></li>
 				<li><a href="Jailbreaking.html">Jailbreaking</a></li>
 				<li><a href="Rooting.html">Rooting</a></li>
 				<li><a href="Graphic_Design.html">Graphic Design</a></li>
