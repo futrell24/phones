@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Greek Alphabet Order Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      gap: 40px;
+      padding: 20px;
+    }
+    .container {
+      flex: 1;
+    }
+    .slot, .word {
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    .slot {
+      background-color: #f9f9f9;
+      min-height: 30px;
+    }
+    .word {
+      background-color: #e0f0ff;
+      cursor: pointer;
+    }
+    .word.used {
+      background-color: #ccc;
+      cursor: default;
+    }
+    .word.highlight {
+      background-color: #fff176 !important; /* yellow highlight */
+      font-weight: bold;
+    }
+    #checkBtn, #resetBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Your Selected Order</h2>
+    <div id="selectedWords"></div>
+    <button id="checkBtn">Check Answers</button>
+    <button id="resetBtn">Reset & Reshuffle</button>
+    <div id="result"></div>
+  </div>
+
+  <div class="container">
+    <h2>Click the Greek Letters</h2>
+    <div id="wordBank"></div>
+  </div>
+
+  <script>
+    const greekNames = [
+      "Alpha", "Beta", "GAMMA", "Delta", "EPSILON", "Zeta", "Eta", "THETA",
+      "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi",
+      "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega"
+    ];
+
+    const highlightWords = ["GAMMA", "EPSILON", "THETA"];
+
+    const selectedWords = document.getElementById("selectedWords");
+    const wordBank = document.getElementById("wordBank");
+    const result = document.getElementById("result");
+    const checkBtn = document.getElementById("checkBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let slots = [];
+
+    function initializeQuiz() {
+      selectedWords.innerHTML = "";
+      wordBank.innerHTML = "";
+      result.textContent = "";
+      slots = [];
+
+      // Create 24 empty slots
+      for (let i = 0; i < 24; i++) {
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        selectedWords.appendChild(slot);
+        slots.push(slot);
+      }
+
+      // Shuffle and display words
+      const shuffled = [...greekNames].sort(() => Math.random() - 0.5);
+      shuffled.forEach(name => {
+        const word = document.createElement("div");
+        word.className = "word";
+        word.textContent = name;
+        word.dataset.name = name;
+        word.onclick = () => {
+          if (word.classList.contains("used")) return;
+          const nextSlot = slots.find(s => s.textContent === "");
+          if (nextSlot) {
+            nextSlot.textContent = name;
+            word.classList.add("used");
+            if (highlightWords.includes(name)) {
+              word.classList.add("highlight");
+            }
+          }
+        };
+        wordBank.appendChild(word);
+      });
+    }
+
+    checkBtn.onclick = () => {
+      const userOrder = slots.map(s => s.textContent);
+      if (userOrder.includes("")) {
+        result.textContent = "Please select all 24 letters before checking.";
+        return;
+      }
+      let correct = 0;
+      for (let i = 0; i < 24; i++) {
+        if (userOrder[i] === greekNames[i]) correct++;
+      }
+      result.textContent = `You got ${correct} out of 24 in the correct order.`;
+    };
+
+    resetBtn.onclick = () => {
+      initializeQuiz();
+    };
+
+    // Initialize on page load
+    initializeQuiz();
+  </script>
+
+</body>
+</html>
