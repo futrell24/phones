@@ -6,63 +6,133 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #mainContent {
       display: flex;
+      flex-direction: row;
       gap: 40px;
       padding: 20px;
+      transition: filter 0.3s ease;
+      flex-wrap: wrap;
     }
+
     .container {
       flex: 1;
+      min-width: 300px;
     }
+
     .slot, .word {
       padding: 10px;
       margin: 5px;
       border: 1px solid #ccc;
       text-align: center;
     }
+
     .slot {
       background-color: #f9f9f9;
       min-height: 30px;
     }
+
     .word {
       background-color: #e0f0ff;
       cursor: pointer;
     }
+
     .word.used {
       background-color: #ccc;
-      cursor: default;
+      cursor: pointer;
     }
+
     .word.highlight {
-      background-color: #fff176 !important; /* yellow highlight */
+      background-color: #fff176 !important;
       font-weight: bold;
     }
-    #checkBtn, #resetBtn {
+
+    #checkBtn, #resetBtn, #resetBtnOverlay {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
       margin-right: 10px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 25px;
+      font-weight: bold;
+      transition: transform 0.3s ease;
+      text-align: center;         
+ 	  width: 100%;                
+  	  display: block;  
+    }
+
+    #result.animate {
+      transform: scale(1.2);
+      color: #2e7d32;
+    }
+
+    /* Overlay styles */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.95);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      text-align: center;
+    }
+
+    #overlay h1 {
+      font-size: 48px;
+      color: #2e7d32;
+      animation: pop 0.6s ease-out;
+      margin-bottom: 20px;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .blurred {
+      filter: blur(5px);
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>Your Selected Order</h2>
-    <div id="selectedWords"></div>
-    <button id="checkBtn">Check Answers</button>
-    <button id="resetBtn">Reset & Reshuffle</button>
-    <div id="result"></div>
+  <div id="overlay">
+    <h1>🏆 Congratulations Champion! You got 100% 🏆</h1>
+    <button id="resetBtnOverlay">Reset & Reshuffle</button>
   </div>
 
-  <div class="container">
-    <h2>Click the Greek Letters</h2>
-    <div id="wordBank"></div>
+  <div id="mainContent">
+    <div class="container">
+      <h2>Your Selected Order</h2>
+      <div id="selectedWords"></div>
+      <button id="checkBtn">Check Answers</button>
+      <button id="resetBtn">Reset & Reshuffle</button>
+      <div id="result"></div>
+    </div>
+
+    <div class="container">
+      <h2>Click the Greek Letters</h2>
+      <div id="wordBank"></div>
+    </div>
   </div>
 
   <script>
     const greekNames = [
-      "Alpha", "Beta", "GAMMA", "Delta", "EPSILON", "Zeta", "Eta", "THETA",
-      "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi",
-      "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega"
+      "Alpha (Αα)", "Beta (Ββ)", "GAMMA (Γγ)", "Delta (Δδ)", "EPSILON (Εε)", "Zeta (Ζζ)", "Eta (Ηη)", "THETA (Θθ)", "Iota (Ιι)", "Kappa (Κκ)", "Lambda (Λλ)", "Mu (Μμ)", "Nu (Νν)", "Xi (Ξξ)", "Omicron (Οο)", "Pi (Ππ)",
+      "Rho (Ρρ)", "Sigma (Σσ)", "Tau (Ττ)", "Upsilon (Υυ)", "Phi (Φφ)", "Chi (Χχ)", "Psi (Ψψ)", "Omega (Ωω)"
     ];
 
     const highlightWords = ["GAMMA", "EPSILON", "THETA"];
@@ -72,14 +142,22 @@
     const result = document.getElementById("result");
     const checkBtn = document.getElementById("checkBtn");
     const resetBtn = document.getElementById("resetBtn");
+    const resetBtnOverlay = document.getElementById("resetBtnOverlay");
+    const overlay = document.getElementById("overlay");
+    const mainContent = document.getElementById("mainContent");
 
     let slots = [];
+    let wordElements = [];
 
     function initializeQuiz() {
       selectedWords.innerHTML = "";
       wordBank.innerHTML = "";
       result.textContent = "";
+      result.classList.remove("animate");
+      overlay.style.display = "none";
+      mainContent.classList.remove("blurred");
       slots = [];
+      wordElements = [];
 
       // Create 24 empty slots
       for (let i = 0; i < 24; i++) {
@@ -96,19 +174,32 @@
         word.className = "word";
         word.textContent = name;
         word.dataset.name = name;
-        word.onclick = () => {
-          if (word.classList.contains("used")) return;
-          const nextSlot = slots.find(s => s.textContent === "");
-          if (nextSlot) {
-            nextSlot.textContent = name;
-            word.classList.add("used");
-            if (highlightWords.includes(name)) {
-              word.classList.add("highlight");
-            }
-          }
-        };
+        word.onclick = () => handleWordClick(word);
         wordBank.appendChild(word);
+        wordElements.push(word);
       });
+    }
+
+    function handleWordClick(word) {
+      const name = word.dataset.name;
+      const indexInSlots = slots.findIndex(s => s.textContent === name);
+
+      if (indexInSlots !== -1) {
+        // Remove from left
+        slots[indexInSlots].textContent = "";
+        word.classList.remove("used");
+        word.classList.remove("highlight");
+      } else {
+        // Add to next available slot
+        const nextSlot = slots.find(s => s.textContent === "");
+        if (nextSlot) {
+          nextSlot.textContent = name;
+          word.classList.add("used");
+          if (highlightWords.includes(name)) {
+            word.classList.add("highlight");
+          }
+        }
+      }
     }
 
     checkBtn.onclick = () => {
@@ -122,9 +213,19 @@
         if (userOrder[i] === greekNames[i]) correct++;
       }
       result.textContent = `You got ${correct} out of 24 in the correct order.`;
+      result.classList.add("animate");
+
+      if (correct === 24) {
+        overlay.style.display = "flex";
+        mainContent.classList.add("blurred");
+      }
     };
 
     resetBtn.onclick = () => {
+      initializeQuiz();
+    };
+
+    resetBtnOverlay.onclick = () => {
       initializeQuiz();
     };
 
